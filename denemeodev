@@ -1,0 +1,217 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+
+namespace albumler_satisi
+{
+    public partial class Form1 : Form
+    {
+        SqlConnection baglanti = new SqlConnection("Data Source=LAPTOP-LM3V3H1B\\SQLEXPRESS;Initial Catalog=muziksirketi;Integrated Security=SSPI");
+        SqlCommand komut;
+        SqlDataAdapter verial;
+        DataSet ds;
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            textBox1.Clear();
+            textBox2.Clear();
+            textBox3.Clear();
+            label5.Text = "";
+        }
+
+        public void listele()
+        {
+
+                baglanti.Open();
+
+                verial = new SqlDataAdapter("select * from musteri", baglanti);
+                ds = new DataSet();
+
+                verial.Fill(ds);
+                dataGridView1.DataSource = ds.Tables[0];
+
+                baglanti.Close();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            komut = new SqlCommand("insert into musteri (AdiSoyadi, Adres, Telefon) values (@ad, @adres, @telefon)", baglanti);
+
+            komut.Parameters.AddWithValue("@ad", textBox1.Text);
+            komut.Parameters.AddWithValue("@adres", textBox2.Text);
+            komut.Parameters.AddWithValue("@telefon", textBox3.Text);
+
+            try
+            {
+                baglanti.Open();
+                komut.ExecuteNonQuery();
+                baglanti.Close();
+            }
+            catch
+            {
+                MessageBox.Show("Bağlantı Hatası");
+            }
+
+            MessageBox.Show("Müşteri Eklendi.");
+            listele();
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            listele();
+        }
+
+        private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            label5.Text =   dataGridView1.CurrentRow.Cells[0].Value.ToString();
+            textBox1.Text = dataGridView1.CurrentRow.Cells[1].Value.ToString();
+            textBox2.Text = dataGridView1.CurrentRow.Cells[2].Value.ToString();
+            textBox3.Text = dataGridView1.CurrentRow.Cells[3].Value.ToString();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (label5.Text == "") MessageBox.Show("Silinecek Müşteriyi Seçiniz.");
+            else
+            {
+                DialogResult tus = MessageBox.Show("Müşteri Silinsin mi?", "UYARI", MessageBoxButtons.YesNo);
+
+                if (tus == DialogResult.Yes)
+                {
+                    baglanti.Open();
+                    komut = new SqlCommand("delete from musteri where MusteriID= @musteri", baglanti);
+                    komut.Parameters.AddWithValue("@musteri", label5.Text);
+
+                    komut.ExecuteNonQuery();
+
+                    baglanti.Close();
+
+                    MessageBox.Show("Müşteri Başarıyla Silindi");
+                    listele();
+
+                }
+
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (label5.Text == "") MessageBox.Show("Müşteri Seçiniz...");
+            else
+            {
+                DialogResult tus = MessageBox.Show("Müşteri Bilgisi Güncellensin mi?", "UYARI", MessageBoxButtons.YesNo);
+
+                if (tus == DialogResult.Yes)
+                {
+                    baglanti.Open();
+                    komut = new SqlCommand("update musteri set AdiSoyadi=@ad, Adres=@adres, Telefon=@telefon where MusteriID= @musteri", baglanti);
+                    komut.Parameters.AddWithValue("@Musteri", label5.Text);
+                    komut.Parameters.AddWithValue("@ad", textBox1.Text);
+                    komut.Parameters.AddWithValue("@adres", textBox2.Text);
+                    komut.Parameters.AddWithValue("@telefon", textBox3.Text);
+
+
+                    komut.ExecuteNonQuery();
+
+                    baglanti.Close();
+
+                    MessageBox.Show("Müşteri Bilgisi Güncellendi");
+                    listele();
+
+                }
+
+            }
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+
+            if (checkBox1.Checked == true) txt_musterikriter.Enabled = true;
+            else
+            {
+                txt_musterikriter.Enabled = false;
+                txt_musterikriter.Clear();
+            }
+        }
+
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+
+            if (checkBox2.Checked == true) combo_albumkriter.Enabled = true;
+            else
+            {
+                combo_albumkriter.Enabled = false;
+                combo_albumkriter.Text = "";
+            }
+        }
+
+
+        private void checkBox3_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox3.Checked == true) combo_turkriter.Enabled = true;
+            else
+            {
+                combo_turkriter.Enabled = false;
+                combo_turkriter.Text = "";
+            }
+        }
+        private void checkBox4_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox4.Checked == true) num_tutarkriter.Enabled = true;
+            else
+            {
+                num_tutarkriter.Enabled = false;
+                num_tutarkriter.Value = 0;
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // TODO: Bu kod satırı 'muziksirketiDataSet4.albumler' tablosuna veri yükler. Bunu gerektiği şekilde taşıyabilir, veya kaldırabilirsiniz.
+            this.albumlerTableAdapter.Fill(this.muziksirketiDataSet4.albumler);
+            // TODO: Bu kod satırı 'muziksirketiDataSet2.turler' tablosuna veri yükler. Bunu gerektiği şekilde taşıyabilir, veya kaldırabilirsiniz.
+            this.turlerTableAdapter.Fill(this.muziksirketiDataSet2.turler);
+
+
+        }
+
+        public string kriterlistele()
+        {
+            string secilenkriterler = "";
+            if (checkBox1.Checked == true) secilenkriterler += " and AdiSoyadi like '%" + txt_musterikriter.Text + "%' ";
+            if (checkBox2.Checked == true) secilenkriterler += " and AlbumAdi= '" + combo_albumkriter.Text + "'";
+            if (checkBox3.Checked == true) secilenkriterler += " and TurAdi= '" + combo_turkriter.Text + "'";
+            if (checkBox4.Checked == true) secilenkriterler += " and TopSiparisTutarı > '" + Convert.ToInt32(num_tutarkriter.Value) + "'";
+
+            return secilenkriterler;
+        }
+
+
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            baglanti.Open();
+            string secilenkriterler = kriterlistele();
+            SqlDataAdapter verial2 = new SqlDataAdapter("Select AdiSoyadi, AlbumAdi, Adet, TopSiparisTutarı, TurAdi from musteri m, siparisler s, siparisDetay sd, albumler a, turler t " +
+                "where m.MusteriID=s.MusteriID and s.SiparisID=sd.SiparisID and sd.AlbumID=a.AlbumID and a.TurID=t.TurID " + secilenkriterler, baglanti);
+            DataSet ds2 = new DataSet();
+            verial2.Fill(ds2);
+
+            dataGridView2.DataSource = ds2.Tables[0];
+            baglanti.Close();
+        }
+    }
+}
